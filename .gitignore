@@ -1,0 +1,6 @@
+.vscode
+__pycache__
+graphoutputs
+outputs
+credentials.txt
+tokendata.txt
