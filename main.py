@@ -68,10 +68,10 @@ def ranking_parser(encounterlst, classlst, pages):
     for encounterid in encounterlst: 
         for job in classlst:
             with open(foldername +'/' + job + str(encounterid) + '.txt', 'w+') as writer:
-                writer.write('rank,rdps,rawdps,killtime,report,fightid\n')
+                writer.write('rank,rdps,rawdps,killtime,report,fightid,name\n')
                 page = 1
                 
-                while True and page <= pages:
+                while True and (pages == -1 or page <= pages):
                     print('Retrieving Page ' + str(page) + ' for ' + job + ' for encounter ' + str(encounterid))
                     query = query_creator(encounterid, job, page)
                     rawJson = make_query(tokenData, query, mainURL, outputloc)
@@ -80,7 +80,7 @@ def ranking_parser(encounterlst, classlst, pages):
                     # iterate through the data
                     for index in range(len(parseData)):
                         parse = parseData[index]
-                        writer.write('{},{},{},{},{},{}\n'.format(100 *(page-1) + index + 1, parse['amount'], parse['rawDPS'], parse['duration'], parse['report']['code'], parse['report']['fightID']))
+                        writer.write('{},{},{},{},{},{},{}\n'.format(100 *(page-1) + index + 1, parse['amount'], parse['rawDPS'], parse['duration'], parse['report']['code'], parse['report']['fightID'], parse['name']))
                     if hasMorePages:
                         page += 1
                     else:
@@ -108,47 +108,47 @@ def credentials_menu():
         elif option == 10:
             return False
 
-def job_prompt():
+def job_prompt(jobs):
     ''' Prompts the user for a list of jobs.
     '''
-    jobchoices = []
     print("\n-----------------------------")
     print("Choose jobs (seperated by comma)")
     print("For example: Red Mage, Black Mage, Bard")
     print("Input 'All' for all jobs, or 'None' for no jobs")
     options = str(input("Choice: "))    
     if options == "None":
-        pass
+        return []
     elif options == "All":
-        jobchoices = jobslst
+        return jobs
     else:
-        jobchoices = [item for item in options.split(', ')]
-    return jobchoices
+        return [item for item in options.split(', ')]
 
-def encounter_prompt():
+def encounter_prompt(encounters):
     ''' Prompts the user for a list of encounterIDs.
     '''
-    encounterchoices = []
     print("\n-----------------------------")
     print("Choose encounters (seperated by comma)")
     print("For example: 73, 75")
     print("Input 'All' for all encounters in Eden's Promise, or 'None' for no encounters.")
     options = str(input("Choice: "))    
     if options == "None":
-        pass
+        return []
     elif options == "All":
-        encounterchoices = encounterlst
+        return encounters
     else:
-        encounterchoices = [int(item) for item in options.split(', ')]
-    return encounterchoices
+        return [int(item) for item in options.split(', ')]
 
 def page_prompt():
     ''' Prompts the user for an integer (representing a page).
     '''
     print("\n-----------------------------")
     print("Choose the number of pages")
-    return int(input("Choice: ")) 
-
+    print("Input 'All' for all pages")
+    options = str(input("Choice: ")) 
+    if options == "All":
+        return -1
+    else:
+        return int(options)
 
 if __name__ == "__main__":
     # Initialize the original stats
@@ -168,8 +168,8 @@ if __name__ == "__main__":
                 print("New data updated.")
 
         elif option == 2:
-            jobchoice = job_prompt()
-            encounterchoice = encounter_prompt()
+            jobchoice = job_prompt(jobslst)
+            encounterchoice = encounter_prompt(encounterlst)
             pagechoice = page_prompt()
             ranking_parser(encounterchoice, jobchoice, pagechoice)
 
