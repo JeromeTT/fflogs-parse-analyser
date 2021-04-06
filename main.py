@@ -11,6 +11,7 @@ tokenURL = 'https://www.fflogs.com/oauth/token'
 
 jobslst = jobs = ['Paladin', 'Warrior', 'Dark Knight', 'Gunbreaker','White Mage','Scholar','Astrologian', 'Monk', 'Dragoon', 'Ninja', 'Samurai', 'Bard', 'Machinist', 'Dancer', 'Black Mage', 'Summoner', 'Red Mage']
 encounterlst = [73,74,75,76,77]
+
 clientID = ''
 clientSecret = ''
 tokenData = ''
@@ -107,6 +108,48 @@ def credentials_menu():
         elif option == 10:
             return False
 
+def job_prompt():
+    ''' Prompts the user for a list of jobs.
+    '''
+    jobchoices = []
+    print("\n-----------------------------")
+    print("Choose jobs (seperated by comma)")
+    print("For example: Red Mage, Black Mage, Bard")
+    print("Input 'All' for all jobs, or 'None' for no jobs")
+    options = str(input("Choice: "))    
+    if options == "None":
+        pass
+    elif options == "All":
+        jobchoices = jobslst
+    else:
+        jobchoices = [item for item in options.split(', ')]
+    return jobchoices
+
+def encounter_prompt():
+    ''' Prompts the user for a list of encounterIDs.
+    '''
+    encounterchoices = []
+    print("\n-----------------------------")
+    print("Choose encounters (seperated by comma)")
+    print("For example: 73, 75")
+    print("Input 'All' for all encounters in Eden's Promise, or 'None' for no encounters.")
+    options = str(input("Choice: "))    
+    if options == "None":
+        pass
+    elif options == "All":
+        encounterchoices = encounterlst
+    else:
+        encounterchoices = [int(item) for item in options.split(', ')]
+    return encounterchoices
+
+def page_prompt():
+    ''' Prompts the user for an integer (representing a page).
+    '''
+    print("\n-----------------------------")
+    print("Choose the number of pages")
+    return int(input("Choice: ")) 
+
+
 if __name__ == "__main__":
     # Initialize the original stats
     clientID, clientSecret, tokenData = reload(credentialsloc, tokenloc)
@@ -125,42 +168,10 @@ if __name__ == "__main__":
                 print("New data updated.")
 
         elif option == 2:
-
-            # Choose jobs
-            jobchoices = []
-            print("\n-----------------------------")
-            print("Choose jobs (seperated by comma)")
-            print("For example: Red Mage, Black Mage, Bard")
-            print("Input 'All' for all jobs, or 'None' for no jobs")
-            options = str(input("Choice: "))    
-            if options == "None":
-                pass
-            elif options == "All":
-                jobchoices = jobslst
-            else:
-                jobchoices = [item for item in options.split(', ')]
-
-            # Choose encounters
-            encounterchoices = []
-            print("\n-----------------------------")
-            print("Choose encounters (seperated by comma)")
-            print("For example: 73, 75")
-            print("Input 'All' for all encounters in Eden's Promise, or 'None' for no encounters.")
-            options = str(input("Choice: "))    
-            if options == "None":
-                pass
-            elif options == "All":
-                encounterchoices = encounterlst
-            else:
-                encounterchoices = [int(item) for item in options.split(', ')]
-
-            # Specify number of pages
-            print("\n-----------------------------")
-            print("Choose the number of pages")
-            options = int(input("Choice: ")) 
-            pages = options
-            
-            ranking_parser(encounterchoices, jobchoices, pages)
+            jobchoice = job_prompt()
+            encounterchoice = encounter_prompt()
+            pagechoice = page_prompt()
+            ranking_parser(encounterchoice, jobchoice, pagechoice)
 
         elif option == 3:
             pass
