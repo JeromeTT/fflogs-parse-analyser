@@ -17,13 +17,28 @@ clientSecret = ''
 tokenData = ''
 query = ''
 
-def query_creator(encounterid, job, page):
+def ranking_query(encounterid, job, page):
     query = """ {{
     worldData {{
     encounter (id: {}) {{
         characterRankings (specName: "{}", page: {})}}
     }}
     }}""".format(encounterid, job, page)
+    return query
+
+def time_query(reportcode, fightID):
+    query = """
+    {{
+    reportData {{
+        report(code: "{}") {{
+        fights(fightIDs: {}) {{
+            startTime
+            endTime
+        }}
+        }}
+    }}
+    }}
+    """.format(reportcode, fightID)
     return query
 
 def saveJson(loc, data):
@@ -45,7 +60,7 @@ def new_token(clientID, clientSecret, tokenURL, loc):
     tokenData = get_token(clientID, clientSecret, tokenURL)
     saveJson(loc, tokenData)
 
-def make_query(tokenData, query, mainURL, outputloc):
+def make_query(tokenData, query, mainURL):
     ''' Makes a query and stores in an output.
     '''
     TOKEN = tokenData["access_token"]
@@ -68,19 +83,23 @@ def ranking_parser(encounterlst, classlst, pages):
     for encounterid in encounterlst: 
         for job in classlst:
             with open(foldername +'/' + job + str(encounterid) + '.txt', 'w+') as writer:
-                writer.write('rank,rdps,rawdps,killtime,report,fightid,name\n')
+                writer.write('rank,name,rdps,rawdps,killtime,report,fightid,starttime,endtime\n')
                 page = 1
                 
                 while True and (pages == -1 or page <= pages):
                     print('Retrieving Page ' + str(page) + ' for ' + job + ' for encounter ' + str(encounterid))
-                    query = query_creator(encounterid, job, page)
-                    rawJson = make_query(tokenData, query, mainURL, outputloc)
-                    parseData = rawJson['data']['worldData']['encounter']['characterRankings']['rankings']
-                    hasMorePages = rawJson['data']['worldData']['encounter']['characterRankings']['hasMorePages']
+                    rawRankingJson = make_query(tokenData, ranking_query(encounterid, job, page), mainURL)
+                    parseData = rawRankingJson['data']['worldData']['encounter']['characterRankings']['rankings']
+                    hasMorePages = rawRankingJson['data']['worldData']['encounter']['characterRankings']['hasMorePages']
                     # iterate through the data
                     for index in range(len(parseData)):
                         parse = parseData[index]
-                        writer.write('{},{},{},{},{},{},{}\n'.format(100 *(page-1) + index + 1, parse['amount'], parse['rawDPS'], parse['duration'], parse['report']['code'], parse['report']['fightID'], parse['name']))
+                        # Getting the start time and end time of each individual parse
+                        test = time_query(parse['report']['code'], parse['report']['fightID'])
+                        rawTimeJson = make_query(tokenData, test, mainURL)
+                        timeData = rawTimeJson['data']['reportData']['report']['fights'][0]
+                        
+                        writer.write('{},{},{},{},{},{},{},{},{}\n'.format(100 *(page-1) + index + 1, parse['name'], parse['amount'], parse['rawDPS'], parse['duration'], parse['report']['code'], parse['report']['fightID'], timeData['startTime'],timeData['endTime']))
                     if hasMorePages:
                         page += 1
                     else:
@@ -149,6 +168,18 @@ def page_prompt():
         return -1
     else:
         return int(options)
+test_query = """
+{
+reportData {
+  report(code: "RPp1JCGMwnXNB2fY") {
+    events(fightIDs: [27], endTime: 6000000000, sourceClass: "Bard", limit: 10000){
+      data
+    }
+    }
+  }
+}
+"""
+
 
 if __name__ == "__main__":
     # Initialize the original stats
@@ -174,8 +205,15 @@ if __name__ == "__main__":
             ranking_parser(encounterchoice, jobchoice, pagechoice)
 
         elif option == 3:
-            pass
-            
+
+            # for a singular report
+            '''
+            response = make_query(tokenData, timequery, mainURL)
+            starttime = response['data']['reportData']['report']['fights']['starttime']
+            endtime = response['data']['reportData']['report']['fights']['starttime']
+            for event in rawdata:
+                print(event['timestamp'] if event['abilityGameID'] == 3559 else '')
+            '''
         elif option == 10:
             # End the program.
             print('Goodbye.')
